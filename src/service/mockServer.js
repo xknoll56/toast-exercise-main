@@ -93,6 +93,6 @@ export function createMockFormSubmission() {
       liked: false,
     },
   };
-  console.log(formSubmission);
+  
   callbacks.forEach((cb) => cb(formSubmission));
 }

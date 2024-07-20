@@ -3,10 +3,31 @@ import Button from '@mui/material/Button';
 import Snackbar from '@mui/material/Snackbar';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import { onMessage } from './service/mockServer';
+import { useEffect } from 'react';
 
-export default function Toast({open, setOpen}) {
-  const handleClose = () => {
+export default function Toast() {
+
+  const init = () => {
+    onMessage(onFormSubmission);
+  };
+
+  useEffect(() => {
+    init();
+  }, []); 
+
+  const [open, setOpen] = React.useState(false);
+
+  const handleClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
     setOpen(false);
+  };
+  const onFormSubmission = (message) => {
+    console.log(message);
+    if(!open)
+        setOpen(true);
   };
 
   const action = (
