@@ -13,9 +13,9 @@ export default function Toast({ onLikedMessagesUpdate }) {
     const [messages, setMessages] = useState([]);
     const [likedMessages, setLikedMessages] = useState([]);
 
-    const init = () => {
+    const init = async () => {
       onMessage(onFormSubmission);
-      localStorage.clear();
+      await updateLikedSubmissions();
     };
 
   useEffect(() => {
@@ -44,12 +44,10 @@ export default function Toast({ onLikedMessagesUpdate }) {
         setOpen(false);
   };
 
-  const insertLikedSubmission = async (formSubmission, delay = 10) => {
+  const insertLikedSubmission = async (formSubmission, delay = 0) => {
     const trySave = async () => {
       try {
         await saveLikedFormSubmission(formSubmission);
-        console.log("Submission saved successfully.");
-        updateLikedSubmissions();
       } catch (error) {
         console.error("Error saving message. Retrying in", delay, "ms...", error.message);
         await new Promise(resolve => setTimeout(resolve, delay)); // Wait before retrying
@@ -60,7 +58,7 @@ export default function Toast({ onLikedMessagesUpdate }) {
     await trySave();
   };
 
-  const updateLikedSubmissions = async (delay = 10) => {
+  const updateLikedSubmissions = async (delay = 0) => {
     const tryUpdate = async () => {
       try {
         const submissions = await fetchLikedFormSubmissions();
@@ -79,7 +77,7 @@ export default function Toast({ onLikedMessagesUpdate }) {
     if (messages.length > 0) {
       const firstMessage = messages[0]; // Get the first message
       setMessages(prevMessages => prevMessages.slice(1)); // Remove the first message
-
+      setLikedMessages(prevLikedMessages => [...prevLikedMessages, firstMessage]);
       // Save the liked submission
       try {
         await insertLikedSubmission(firstMessage);
