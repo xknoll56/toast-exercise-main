@@ -4,42 +4,59 @@ import Snackbar from '@mui/material/Snackbar';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import { onMessage } from './service/mockServer';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Toast() {
 
-  const init = () => {
-    onMessage(onFormSubmission);
-  };
+    const [open, setOpen] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [likedMessages, setLikedMessages] = useState([]);
+
+    const init = () => {
+      onMessage(onFormSubmission);
+    };
 
   useEffect(() => {
     init();
   }, []); 
 
-  const [open, setOpen] = React.useState(false);
+  useEffect(() => {
+    if (messages.length > 0 && messages[0]) {
+      setOpen(true);
+    }
+  }, [messages]);
 
-  const handleClose = (event, reason) => {
+
+
+  const handleDismiss = (event, reason) => {
     if (reason === 'clickaway') {
       return;
     }
-    setOpen(false);
+    const messagesLength = messages.length;
+    setMessages(prevMessages => prevMessages.slice(1));
+    console.log(messagesLength)
+    if(messagesLength === 1)
+        setOpen(false);
   };
+
+  const handleLike = () => {
+    let firstMessage = messages.shift();
+    setLikedMessages(prevLikedMessages => [...prevLikedMessages, firstMessage]);
+  }
   const onFormSubmission = (message) => {
-    console.log(message);
-    if(!open)
-        setOpen(true);
+    setMessages(prevMessages => [...prevMessages, message]);
   };
 
   const action = (
     <React.Fragment>
-      <Button color="secondary" size="small" onClick={handleClose}>
-        UNDO
+      <Button color="secondary" size="small" onClick={handleLike}>
+        LIKE
       </Button>
       <IconButton
         size="small"
         aria-label="close"
         color="inherit"
-        onClick={handleClose}
+        onClick={handleDismiss}
       >
         <CloseIcon fontSize="small" />
       </IconButton>
@@ -48,12 +65,12 @@ export default function Toast() {
 
   return (
     <div>
-      <Snackbar
+      {messages.length>0 &&<Snackbar
         open={open}
-        onClose={handleClose}
-        message="Note archived"
+        onClose={handleDismiss}
+        message={messages[0].id}
         action={action}
-      />
+      />}
     </div>
   );
 }
