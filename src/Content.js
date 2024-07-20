@@ -2,7 +2,6 @@ import React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Toast from './Toast';
-import { useState } from 'react';
 
 export default function Content() {
   return (

@@ -5,15 +5,16 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import { onMessage } from './service/mockServer';
 import { useEffect, useState } from 'react';
+import { saveLikedFormSubmission, fetchLikedFormSubmissions } from './service/mockServer';
 
 export default function Toast() {
 
     const [open, setOpen] = useState(false);
     const [messages, setMessages] = useState([]);
-    const [likedMessages, setLikedMessages] = useState([]);
 
     const init = () => {
       onMessage(onFormSubmission);
+      localStorage.clear();
     };
 
   useEffect(() => {
@@ -34,17 +35,46 @@ export default function Toast() {
     }
     const messagesLength = messages.length;
     setMessages(prevMessages => prevMessages.slice(1));
-    console.log(messagesLength)
     if(messagesLength === 1)
         setOpen(false);
   };
 
-  const handleLike = () => {
-    let firstMessage = messages.shift();
-    setLikedMessages(prevLikedMessages => [...prevLikedMessages, firstMessage]);
-  }
+  const insertLikedSubmission = async (formSubmission, delay = 10) => {
+    const trySave = async () => {
+      try {
+        await saveLikedFormSubmission(formSubmission);
+        console.log("Submission saved successfully.");
+        console.log(await fetchLikedFormSubmissions());
+      } catch (error) {
+        console.error("Error saving message. Retrying in", delay, "ms...", error.message);
+        await new Promise(resolve => setTimeout(resolve, delay)); // Wait before retrying
+        await trySave(); // Retry the operation
+      }
+    };
+  
+    await trySave();
+  };
+
+  const handleLike = async () => {
+    if (messages.length > 0) {
+      const firstMessage = messages[0]; // Get the first message
+      setMessages(prevMessages => prevMessages.slice(1)); // Remove the first message
+
+      // Save the liked submission
+      try {
+        await insertLikedSubmission(firstMessage);
+      } catch (error) {
+        console.error("Error inserting liked submission:", error);
+      }
+    }
+  };
+
   const onFormSubmission = (message) => {
     setMessages(prevMessages => [...prevMessages, message]);
+  };
+
+  const messageStyle = {
+    whiteSpace: 'pre-line', // Preserves whitespace and line breaks
   };
 
   const action = (
@@ -68,7 +98,11 @@ export default function Toast() {
       {messages.length>0 &&<Snackbar
         open={open}
         onClose={handleDismiss}
-        message={messages[0].id}
+        message={
+            <div style={messageStyle}>
+              {`${messages[0]?.data.firstName || ''} ${messages[0]?.data.lastName || ''}\n${messages[0]?.data.email || ''}`}
+            </div>
+          }
         action={action}
       />}
     </div>
