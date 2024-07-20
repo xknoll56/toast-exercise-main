@@ -7,10 +7,11 @@ import { onMessage } from './service/mockServer';
 import { useEffect, useState } from 'react';
 import { saveLikedFormSubmission, fetchLikedFormSubmissions } from './service/mockServer';
 
-export default function Toast() {
+export default function Toast({ onLikedMessagesUpdate }) {
 
     const [open, setOpen] = useState(false);
     const [messages, setMessages] = useState([]);
+    const [likedMessages, setLikedMessages] = useState([]);
 
     const init = () => {
       onMessage(onFormSubmission);
@@ -26,6 +27,10 @@ export default function Toast() {
       setOpen(true);
     }
   }, [messages]);
+
+  useEffect(() => {
+    onLikedMessagesUpdate(likedMessages); // Notify parent of liked messages update
+  }, [likedMessages, onLikedMessagesUpdate]);
 
 
 
@@ -44,7 +49,7 @@ export default function Toast() {
       try {
         await saveLikedFormSubmission(formSubmission);
         console.log("Submission saved successfully.");
-        console.log(await fetchLikedFormSubmissions());
+        updateLikedSubmissions();
       } catch (error) {
         console.error("Error saving message. Retrying in", delay, "ms...", error.message);
         await new Promise(resolve => setTimeout(resolve, delay)); // Wait before retrying
@@ -53,6 +58,21 @@ export default function Toast() {
     };
   
     await trySave();
+  };
+
+  const updateLikedSubmissions = async (delay = 10) => {
+    const tryUpdate = async () => {
+      try {
+        const submissions = await fetchLikedFormSubmissions();
+        setLikedMessages(submissions.formSubmissions);
+      } catch (error) {
+        console.error("Error saving message. Retrying in", delay, "ms...", error.message);
+        await new Promise(resolve => setTimeout(resolve, delay)); // Wait before retrying
+        await tryUpdate(); // Retry the operation
+      }
+    };
+  
+    await tryUpdate();
   };
 
   const handleLike = async () => {
